@@ -1,4 +1,3 @@
-// worker.js
 const { Worker } = require('bullmq');
 const { fetchLatestVideos } = require('./jobs/youtubeFetcher');
 

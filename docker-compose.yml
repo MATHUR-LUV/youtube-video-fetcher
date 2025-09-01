@@ -24,7 +24,7 @@ services:
       - "8000:8000"
     env_file:
       - .env
-    # ADD THIS BLOCK
+
     environment:
       - NODE_ENV=production
     depends_on:
@@ -38,7 +38,7 @@ services:
       - .:/app
     env_file:
       - .env
-    # ADD THIS BLOCK
+  
     environment:
       - NODE_ENV=production
     depends_on:

@@ -1,4 +1,3 @@
-// migrations/XXXXXXXXXXXXXX-create-video.js
 'use strict';
 module.exports = {
   async up(queryInterface, Sequelize) {
@@ -26,13 +25,12 @@ module.exports = {
       }
     });
 
-    // Add indexes for performance
     await queryInterface.addIndex('Videos', ['publishedAt']);
     await queryInterface.sequelize.query(
       `CREATE INDEX videos_search_vector_idx ON "Videos" USING gin("searchVector");`
     );
 
-    // Add the trigger to auto-update the searchVector
+    // Adding the trigger to auto-update the searchVector
     await queryInterface.sequelize.query(`
       CREATE OR REPLACE FUNCTION update_video_search_vector()
       RETURNS TRIGGER AS $$

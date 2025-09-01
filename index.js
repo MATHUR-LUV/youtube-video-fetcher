@@ -1,4 +1,3 @@
-// index.js
 require('dotenv').config();
 const express = require('express');
 const { Queue } = require('bullmq');
@@ -10,12 +9,12 @@ const PORT = process.env.PORT || 8000;
 const redisConnection = { host: 'redis', port: 6379 };
 app.use(cors());
 
-// --- Job Scheduler ---
+
 const videoQueue = new Queue('video-fetch-queue', { connection: redisConnection });
 
 async function addRecurringJob() {
   await videoQueue.add('fetch-videos', {}, {
-    repeat: { every: 10000 }, // Every 10 seconds
+    repeat: { every: 10000 }, 
     removeOnComplete: true,
     removeOnFail: true,
   });
@@ -23,10 +22,10 @@ async function addRecurringJob() {
 }
 addRecurringJob();
 
-// --- API Endpoints ---
+
 app.get('/', (req, res) => res.send('API is running!'));
 
-// GET /api/videos - Paginated list of all videos
+// GET /api/videos -> Paginated list of all videos
 app.get('/api/videos', async (req, res) => {
   const page = parseInt(req.query.page, 10) || 1;
   const limit = parseInt(req.query.limit, 10) || 10;
@@ -45,7 +44,7 @@ app.get('/api/videos', async (req, res) => {
   }
 });
 
-// GET /api/videos/search - Full-text search
+// GET /api/videos/search -> Full-text search
 app.get('/api/videos/search', async (req, res) => {
   const query = req.query.q;
   if (!query) {

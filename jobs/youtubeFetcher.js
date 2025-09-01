@@ -1,9 +1,8 @@
-// jobs/youtubeFetcher.js
 require('dotenv').config();
 const { google } = require('googleapis');
 const { Video } = require('../models');
 
-// --- API Key Management ---
+
 const API_KEYS = process.env.YOUTUBE_API_KEYS.split(',');
 let currentKeyIndex = 0;
 
@@ -19,7 +18,7 @@ const fetchLatestVideos = async () => {
   const latestVideo = await Video.findOne({ order: [['publishedAt', 'DESC']] });
   const publishedAfter = latestVideo 
     ? new Date(latestVideo.publishedAt.getTime() + 1000).toISOString()
-    : new Date(Date.now() - 120000).toISOString(); // Default to 2 mins ago on first run
+    : new Date(Date.now() - 120000).toISOString(); 
 
   try {
     const response = await youtube.search.list({

@@ -1,10 +1,9 @@
-// models/video.js
 'use strict';
 const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Video extends Model {}
   Video.init({
-    videoId: { // Add this block
+    videoId: { 
       type: DataTypes.STRING,
       primaryKey: true,
       allowNull: false,
@@ -13,13 +12,13 @@ module.exports = (sequelize, DataTypes) => {
     description: DataTypes.TEXT,
     publishedAt: DataTypes.DATE,
     thumbnailUrl: DataTypes.STRING,
-    searchVector: DataTypes.TSVECTOR // Add this for search
+    searchVector: DataTypes.TSVECTOR 
   }, {
     sequelize,
     modelName: 'Video',
-    timestamps: false, // We don't need createdAt/updatedAt
+    timestamps: false, 
     defaultScope: {
-      order: [['publishedAt', 'DESC']], // Default sort order
+      order: [['publishedAt', 'DESC']], 
     },
   });
   return Video;
