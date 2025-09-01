@@ -1,0 +1,124 @@
+YouTube Video Fetcher
+Streamline is a complete full-stack application that continuously fetches the latest YouTube videos based on a predefined search query, stores them, and displays them on a clean, responsive, and searchable frontend.
+
+A preview of the Streamline frontend, displaying a grid of the latest videos.
+
+✨ Key Features
+Backend
+🔄 Continuous Background Fetching: A dedicated worker service polls the YouTube Data API every 10 seconds for new videos.
+
+🔑 API Key Rotation: Automatically cycles through multiple API keys to manage and mitigate quota exhaustion.
+
+🚀 Scalable Architecture: Built with a microservice-like architecture using Docker, separating the API, background worker, database, and caching layer.
+
+🔍 Advanced Full-Text Search: The API provides a powerful search endpoint that finds partial and out-of-order matches in video titles and descriptions.
+
+📄 Paginated API: The main video listing endpoint is paginated to efficiently handle large datasets.
+
+Frontend
+⚡ Real-time Search: A dynamic search bar that provides instant results as you type.
+
+📱 Fully Responsive: The user interface is built with Tailwind CSS and looks great on all devices, from mobile phones to desktops.
+
+🧭 Easy Pagination: Simple "Next" and "Previous" buttons for navigating through the video history.
+
+💡 Modern UI/UX: Clean, modern design with clear loading and empty states for a smooth user experience.
+
+📦 Zero-Setup Frontend: A single HTML file with React and Babel loaded via CDN means no build tools or npm install are needed to run the frontend.
+
+🛠️ Tech Stack & Architecture
+This project is composed of several services that work together, all managed by Docker.
+
+Backend: Node.js, Express.js
+
+Frontend: React (via CDN), Tailwind CSS
+
+Database: PostgreSQL (for relational data storage and advanced full-text search)
+
+Job Queue/Broker: BullMQ with Redis (for managing background tasks)
+
+Containerization: Docker & Docker Compose
+
+System Architecture
+The system is designed for scalability and separation of concerns.
+
+The Frontend (React) communicates with the Backend API (Express).
+
+The Backend API schedules a recurring job in the Job Queue (Redis via BullMQ).
+
+The Worker process picks up jobs from the queue, calls the YouTube API, and stores the video data in the Database (PostgreSQL).
+
+The Backend API reads from the database to serve data to the frontend.
+
+🚀 Getting Started
+Follow these instructions to get the entire project up and running on your local machine.
+
+Prerequisites
+Docker and Docker Compose must be installed on your system.
+
+Installation & Setup
+Clone the Repository
+
+git clone <your-repository-url>
+cd <repository-folder>
+
+Create and Configure Environment File
+Copy the example environment file and fill in your details.
+
+cp .env.example .env
+
+You must open the .env file and add your YouTube Data API v3 keys:
+
+YOUTUBE_API_KEYS=your_first_api_key,your_second_api_key
+
+Build and Run the Containers
+This single command will build the Node.js image and start all services (API, worker, database, Redis) in the background.
+
+docker-compose up --build -d
+
+Run the Database Migration
+With the containers running, execute this command to set up the database schema.
+
+docker-compose exec app npx sequelize-cli db:migrate --env production
+
+Note: We specify the production environment to ensure it connects to the db container correctly.
+
+Access the Application
+
+Backend API: The API is now running at http://localhost:8000.
+
+Frontend: Open the index.html file (located in the frontend folder) directly in your web browser.
+
+The background worker will now be fetching videos every 10 seconds. It may take a minute for the first batch of videos to appear on the frontend.
+
+🔌 API Endpoints
+The backend provides the following RESTful API endpoints.
+
+1. List Videos
+Returns a paginated list of all stored videos, sorted by publishing date (newest first).
+
+URL: /api/videos
+
+Method: GET
+
+Query Params:
+
+page (number, optional, default: 1)
+
+limit (number, optional, default: 10)
+
+Example: http://localhost:8000/api/videos?page=2&limit=12
+
+2. Search Videos
+Performs a full-text search on video titles and descriptions.
+
+URL: /api/videos/search
+
+Method: GET
+
+Query Parameter:
+
+q (string, required)
+
+Example: http://localhost:8000/api/videos/search?q=goal+highlights
+
