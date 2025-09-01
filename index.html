@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Video Feed</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM for the application -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Babel to transpile JSX in the browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Custom Google Font for a modern look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useCallback } = React;
+
+        // --- Configuration ---
+        const API_BASE_URL = 'http://localhost:8000/api';
+
+        // --- Main App Component ---
+        function App() {
+            const [videos, setVideos] = useState([]);
+            const [page, setPage] = useState(1);
+            const [totalPages, setTotalPages] = useState(1);
+            const [searchQuery, setSearchQuery] = useState('');
+            const [isLoading, setIsLoading] = useState(true);
+            const [error, setError] = useState(null);
+
+            // Debounce function to delay API calls while typing
+            const debounce = (func, delay) => {
+                let timeoutId;
+                return (...args) => {
+                    clearTimeout(timeoutId);
+                    timeoutId = setTimeout(() => {
+                        func.apply(this, args);
+                    }, delay);
+                };
+            };
+
+            const fetchVideos = useCallback(async (query, pageNum) => {
+                setIsLoading(true);
+                setError(null);
+                let url;
+
+                try {
+                    if (query) {
+                        url = `${API_BASE_URL}/videos/search?q=${encodeURIComponent(query)}`;
+                        // Note: The provided backend search endpoint isn't paginated. 
+                        // We'll reset pagination state when searching.
+                        setPage(1);
+                        setTotalPages(1);
+                    } else {
+                        url = `${API_BASE_URL}/videos?page=${pageNum}&limit=12`;
+                    }
+
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    const data = await response.json();
+
+                    if (query) {
+                        setVideos(data);
+                        setTotalPages(1); // No pagination on search results
+                    } else {
+                        setVideos(data.videos || []);
+                        setTotalPages(data.totalPages || 1);
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch videos:", e);
+                    setError('Failed to load videos. Make sure the backend server is running.');
+                    setVideos([]);
+                } finally {
+                    setIsLoading(false);
+                }
+            }, []);
+            
+            // Debounced version of fetchVideos for search
+            const debouncedFetch = useCallback(debounce(fetchVideos, 500), [fetchVideos]);
+
+            useEffect(() => {
+                 if (searchQuery) {
+                    debouncedFetch(searchQuery, 1);
+                } else {
+                    fetchVideos(searchQuery, page);
+                }
+            }, [searchQuery, page, fetchVideos, debouncedFetch]);
+
+            const handleSearchChange = (e) => {
+                setSearchQuery(e.target.value);
+            };
+
+            const handleNextPage = () => {
+                if (page < totalPages) {
+                    setPage(prevPage => prevPage + 1);
+                }
+            };
+
+            const handlePrevPage = () => {
+                if (page > 1) {
+                    setPage(prevPage => prevPage - 1);
+                }
+            };
+            
+            return (
+                <div className="container mx-auto p-4 md:p-8">
+                    <Header />
+                    <SearchBar query={searchQuery} onSearchChange={handleSearchChange} />
+                    
+                    {error && <ErrorMessage message={error} />}
+                    
+                    {isLoading ? (
+                        <LoadingSpinner />
+                    ) : (
+                        videos.length > 0 ? (
+                            <>
+                                <VideoGrid videos={videos} />
+                                {!searchQuery && totalPages > 1 && (
+                                    <Pagination 
+                                        page={page} 
+                                        totalPages={totalPages} 
+                                        onNext={handleNextPage} 
+                                        onPrev={handlePrevPage} 
+                                    />
+                                )}
+                            </>
+                        ) : (
+                           <NoResultsMessage query={searchQuery} />
+                        )
+                    )}
+                    <Footer />
+                </div>
+            );
+        }
+
+        // --- UI Components ---
+        
+        const Header = () => (
+            <header className="text-center mb-8">
+                <h1 className="text-4xl md:text-5xl font-bold text-gray-900">YouTube Video Feed</h1>
+                <p className="text-lg text-gray-600 mt-2">Latest videos fetched from your custom backend.</p>
+            </header>
+        );
+
+        const SearchBar = ({ query, onSearchChange }) => (
+            <div className="mb-8">
+                <input
+                    type="text"
+                    value={query}
+                    onChange={onSearchChange}
+                    placeholder="Search for videos by title or description..."
+                    className="w-full p-4 text-lg border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                />
+            </div>
+        );
+
+        const VideoGrid = ({ videos }) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {videos.map(video => <VideoCard key={video.videoId} video={video} />)}
+            </div>
+        );
+
+        const VideoCard = ({ video }) => (
+            <div className="bg-white rounded-lg shadow-md overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 flex flex-col">
+                <img src={video.thumbnailUrl} alt={video.title} className="w-full h-48 object-cover" />
+                <div className="p-4 flex flex-col flex-grow">
+                    <h3 className="text-lg font-semibold mb-2 flex-grow">{video.title}</h3>
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-3">{video.description || "No description available."}</p>
+                    <p className="text-xs text-gray-500 mt-auto">Published: {new Date(video.publishedAt).toLocaleString()}</p>
+                </div>
+            </div>
+        );
+        
+        const Pagination = ({ page, totalPages, onNext, onPrev }) => (
+            <div className="flex justify-center items-center mt-8 space-x-4">
+                <button 
+                    onClick={onPrev} 
+                    disabled={page <= 1}
+                    className="px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg shadow-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                >
+                    Previous
+                </button>
+                <span className="text-gray-700 font-medium">Page {page} of {totalPages}</span>
+                <button 
+                    onClick={onNext} 
+                    disabled={page >= totalPages}
+                    className="px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg shadow-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                >
+                    Next
+                </button>
+            </div>
+        );
+
+        const LoadingSpinner = () => (
+             <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
+            </div>
+        );
+
+        const ErrorMessage = ({ message }) => (
+            <div className="text-center p-8 bg-red-100 text-red-700 rounded-lg">
+                <h3 className="font-bold text-lg">An Error Occurred</h3>
+                <p>{message}</p>
+            </div>
+        );
+        
+        const NoResultsMessage = ({ query }) => (
+             <div className="text-center p-8 bg-gray-50 text-gray-500 rounded-lg">
+                <h3 className="font-bold text-lg">No Videos Found</h3>
+                {query ? (
+                    <p>Your search for "{query}" did not return any results.</p>
+                ) : (
+                    <p>The worker may still be fetching the initial set of videos.</p>
+                )}
+            </div>
+        );
+        
+        const Footer = () => (
+            <footer className="text-center mt-12 text-gray-500 text-sm">
+                <p>Frontend created with React and Tailwind CSS.</p>
+            </footer>
+        );
+
+        // --- Render the App ---
+        const container = document.getElementById('root');
+        const root = ReactDOM.createRoot(container);
+        root.render(<App />);
+    </script>
+</body>
+</html>

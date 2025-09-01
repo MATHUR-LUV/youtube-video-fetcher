@@ -1,0 +1,16 @@
+# Dependency directories
+node_modules
+
+# Git repository folder
+.git
+
+# Environment variables file
+.env
+
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Logs
+npm-debug.log

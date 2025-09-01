@@ -1,0 +1,16 @@
+{
+  "development": {
+    "username": "user",
+    "password": "password",
+    "database": "youtube_db",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  },
+  "production": {
+    "username": "user",
+    "password": "password",
+    "database": "youtube_db",
+    "host": "db",
+    "dialect": "postgres"
+  }
+}
